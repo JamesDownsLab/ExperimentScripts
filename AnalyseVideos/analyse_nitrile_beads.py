@@ -10,13 +10,12 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 # file = "/home/ppxjd3/Videos/test_move.MP4"
 ### Tracking ###
 ###############
-methods = configurations.NITRILE_BEADS_METHOD
 options = configurations.NITRILE_BEADS_PARAMETERS
 
-# pt = tracking.ParticleTracker(file, methods, options, multiprocess=False,
-#                               crop_method='auto', show_debug=False)
+pt = tracking.ParticleTracker(file, options, multiprocess=False,
+                              crop_method='auto', show_debug=False)
 # s = time.time()
-# pt.track()
+pt.track()
 # print(time.time() - s)
 #
 data_store = dataframes.DataStore(file, load=True)
