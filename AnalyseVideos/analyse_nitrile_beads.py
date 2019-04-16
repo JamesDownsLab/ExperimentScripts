@@ -1,5 +1,5 @@
 from ParticleTracking import dataframes, configurations, tracking, statistics, annotation
-from Generic import filedialogs
+from Generic import filedialogs, video
 import warnings
 warnings.filterwarnings("ignore")
 import time
@@ -13,32 +13,29 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 methods = configurations.NITRILE_BEADS_METHOD
 options = configurations.NITRILE_BEADS_PARAMETERS
 
-pt = tracking.ParticleTracker(file, methods, options, multiprocess=False,
-                              crop_method='auto', show_debug=False)
-s = time.time()
-pt.track()
-print(time.time() - s)
-
+# pt = tracking.ParticleTracker(file, methods, options, multiprocess=False,
+#                               crop_method='auto', show_debug=False)
+# s = time.time()
+# pt.track()
+# print(time.time() - s)
+#
 data_store = dataframes.DataStore(file, load=True)
-
-
-
-
 data_store.inspect_dataframes()
 
 ### Annotations ###
 ###################
-annotator = annotation.VideoAnnotator(data_store, file)
-annotator.add_coloured_circles()
+# annotator = annotation.VideoAnnotator(data_store, file)
+# annotator.add_coloured_circles()
 # # # annotation.neighbors(data_store, 0)
+annotator = video.CircleAnnotate(data_store, file)
 
 ### Statistics ###
 ##################
-calculator = statistics.PropertyCalculator(data_store)
+# calculator = statistics.PropertyCalculator(data_store)
 # calculator.distance()
 # calculator.edge_distance()
 # calculator.level_checks()
-calculator.order()
+# calculator.order()
 # calculator.susceptibility()
 # calculator.density()
 # calculator.average_density()
