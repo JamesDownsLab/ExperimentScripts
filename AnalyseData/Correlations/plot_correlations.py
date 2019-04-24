@@ -15,16 +15,36 @@ def corr(file, frame):
     r_peaks, g_peaks = find_peaks(r, g)
     r6_peaks, g6_peaks = find_peaks(r, y)
 
-    plot_envelope(r, g, r_peaks, g_peaks)
-    plot_envelope(r, y, r6_peaks, g6_peaks)
+    g_env = envelope(r, g, r_peaks, g_peaks)
+    g6_env = envelope(r, y, r6_peaks, g6_peaks)
 
-def plot_envelope(x, y, xpeaks, ypeaks):
+    g_exp = fit_exponential(r_peaks, g_peaks, r)
+    g6_exp = fit_exponential(r6_peaks, g6_peaks, r)
+
+    plt.figure()
+    plt.plot(r, g)
+    plt.plot(r, g_exp)
+    plt.show()
+
+    plt.figure()
+    plt.plot(r, y)
+    plt.plot(r, g6_exp)
+    plt.show()
+
+def fit_exponential(x, y, x_data):
+    popt, pcov = optimize.curve_fit(exponential, x, y)
+    yfit = exponential(x_data, popt)
+    return yfit
+
+def exponential(x, b):
+    return (max(x)/np.exp(1))*np.exp(b*x)
+
+
+def envelope(x, y, xpeaks, ypeaks):
     f = interpolate.interp1d(xpeaks, ypeaks, kind='cubic', bounds_error=False)
     fit = f(x)
-    plt.figure()
-    plt.plot(x, y, '.')
-    plt.plot(x, fit)
-    plt.show()
+    return fit
+
 
 def find_peaks(xdata, ydata, plot=False):
     peaks, _ = signal.find_peaks(ydata)
