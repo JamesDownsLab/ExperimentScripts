@@ -8,12 +8,13 @@ import time
 ###################
 file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/home/ppxjd3/Videos/')
 # file = "/home/ppxjd3/Videos/test_move.MP4"
+
 ### Tracking ###
 ###############
 options = configurations.NITRILE_BEADS_PARAMETERS
-
-pt = tracking.ParticleTracker(file, options, multiprocess=False,
-                              crop_method='auto', show_debug=False)
+#
+# pt = tracking.ParticleTracker(file, options, multiprocess=False,
+#                               crop_method='auto', show_debug=False)
 # s = time.time()
 # pt.track()
 # print(time.time() - s)
@@ -30,19 +31,15 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Statistics ###
 ##################
-calculator = statistics.PropertyCalculator(data_store)
+# calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
 # calculator.distance()
-# calculator.edge_distance()
 # calculator.level_checks()
 # calculator.order()
-# calculator.susceptibility()
-calculator.density()
-# calculator.average_density()
-# calculator.correlations(300, r_min=1, r_max=20, dr=0.04)
-# calculator.correlations(10)
+# calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###
 ##############
+from ExperimentScripts.AnalyseData.Correlations import plot_correlations
+plot_correlations.corr(file, 1)
 
-# graphs.order_quiver(data_store, 0)
