@@ -1,4 +1,4 @@
-from ParticleTracking import dataframes
+from ParticleTracking import dataframes, annotation
 from ParticleTracking.tracking_methods.james_nitrile import JamesPT
 from Generic import filedialogs
 import warnings
@@ -12,8 +12,8 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-tracker = JamesPT(file, tracking=True, multiprocess=True)
-tracker.track()
+# tracker = JamesPT(file, tracking=True, multiprocess=True)
+# tracker.track()
 
 #
 data_store = dataframes.DataStore(file, load=True)
@@ -21,8 +21,8 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Annotations ###
 ###################
-# annotator = annotation.VideoAnnotator(data_store, file)
-# annotator.add_coloured_circles()
+annotator = annotation.VideoAnnotator(data_store, file)
+annotator.add_coloured_circles()
 # # # annotation.neighbors(data_store, 0)
 # annotator = video.CircleAnnotate(data_store, file)
 
@@ -37,6 +37,6 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Graphs ###
 ##############
-from ExperimentScripts.AnalyseData.Correlations import plot_correlations
-plot_correlations.corr(file, 1)
+# from ExperimentScripts.AnalyseData.Correlations import plot_correlations
+# plot_correlations.corr(file, 1)
 
