@@ -12,7 +12,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-tracker = JamesPT(file, tracking=True, multiprocess=True)
+tracker = JamesPT(file, tracking=True, multiprocess=False)
 tracker.track()
 
 #
