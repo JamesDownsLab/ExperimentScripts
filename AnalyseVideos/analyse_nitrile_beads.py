@@ -1,8 +1,8 @@
-from ParticleTracking import dataframes, configurations, tracking_methods, statistics, annotation
-from Generic import filedialogs, video
+from ParticleTracking import dataframes
+from ParticleTracking.tracking_methods.james_nitrile import JamesPT
+from Generic import filedialogs
 import warnings
 warnings.filterwarnings("ignore")
-import time
 
 ### Load a file ###
 ###################
@@ -12,7 +12,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-tracker = tracking_methods.JamesPT(file, tracking=True, multiprocess=False)
+tracker = JamesPT(file, tracking=True, multiprocess=True)
 tracker.track()
 
 #
