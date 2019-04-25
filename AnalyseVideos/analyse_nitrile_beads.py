@@ -1,4 +1,4 @@
-from ParticleTracking import dataframes, configurations, tracking, statistics, annotation
+from ParticleTracking import dataframes, configurations, tracking_methods, statistics, annotation
 from Generic import filedialogs, video
 import warnings
 warnings.filterwarnings("ignore")
@@ -11,13 +11,10 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 
 ### Tracking ###
 ###############
-options = configurations.NITRILE_BEADS_PARAMETERS
-#
-# pt = tracking.ParticleTracker(file, options, multiprocess=False,
-#                               crop_method='auto', show_debug=False)
-# s = time.time()
-# pt.track()
-# print(time.time() - s)
+
+tracker = tracking_methods.JamesPT(file, tracking=True, multiprocess=False)
+tracker.track()
+
 #
 data_store = dataframes.DataStore(file, load=True)
 # data_store.inspect_dataframes()
