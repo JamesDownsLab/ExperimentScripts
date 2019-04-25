@@ -12,8 +12,8 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-# tracker = JamesPT(file, tracking=True, multiprocess=True)
-# tracker.track()
+tracker = JamesPT(file, tracking=True, multiprocess=True)
+tracker.track()
 
 #
 data_store = dataframes.DataStore(file, load=True)
