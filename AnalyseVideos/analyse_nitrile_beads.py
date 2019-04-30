@@ -3,6 +3,7 @@ import warnings
 from Generic import filedialogs
 from ParticleTracking import dataframes, statistics
 from ParticleTracking.tracking.james_nitrile import JamesPT
+from ParticleTracking.tracking.example_child import ExampleChild
 from ParticleTracking import annotation
 
 warnings.filterwarnings("ignore")
@@ -16,6 +17,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ###############
 
 # tracker = JamesPT(file, tracking=True, multiprocess=False)
+ExampleChild(file, tracking=True).track()
 # tracker.track()
 
 #
@@ -24,21 +26,21 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Annotations ###
 ###################
-annotation.CircleAnnotator(file, data_store, 'real order', False).annotate()
+# annotation.CircleAnnotator(file, data_store, 'real order', False).annotate()
 # # # annotation.neighbors(data_store, 0)
 # annotator = video.CircleAnnotate(data_store, file)
 
 ### Statistics ###
 ##################
-# calculator = statistics.PropertyCalculator(data_store)
+calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
 # calculator.distance()
 # calculator.level_checks()
-# calculator.order()
-# calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
+calculator.order()
+calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###
 ##############
-# from ExperimentScripts.AnalyseData.Correlations import plot_correlations
-# plot_correlations.corr(file, 1)
+from ExperimentScripts.AnalyseData.Correlations import plot_correlations
+plot_correlations.corr(file, 1)
 
