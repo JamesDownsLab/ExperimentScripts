@@ -1,7 +1,10 @@
-from ParticleTracking import dataframes, annotation
-from ParticleTracking.tracking_methods.james_nitrile import JamesPT
-from Generic import filedialogs
 import warnings
+
+from Generic import filedialogs
+from ParticleTracking import dataframes, statistics
+from ParticleTracking.tracking.james_nitrile import JamesPT
+from ParticleTracking import annotation
+
 warnings.filterwarnings("ignore")
 
 ### Load a file ###
@@ -12,8 +15,8 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-tracker = JamesPT(file, tracking=True, multiprocess=False)
-tracker.track()
+# tracker = JamesPT(file, tracking=True, multiprocess=False)
+# tracker.track()
 
 #
 data_store = dataframes.DataStore(file, load=True)
@@ -21,8 +24,7 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Annotations ###
 ###################
-annotator = annotation.VideoAnnotator(data_store, file)
-annotator.add_coloured_circles()
+annotation.CircleAnnotator(file, data_store, 'real order', False).annotate()
 # # # annotation.neighbors(data_store, 0)
 # annotator = video.CircleAnnotate(data_store, file)
 
