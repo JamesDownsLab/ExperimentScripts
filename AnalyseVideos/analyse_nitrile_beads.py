@@ -38,11 +38,8 @@ calculator = statistics.PropertyCalculator(data_store)
 # calculator.distance()
 # calculator.level_checks()
 # t = time.time()
-calculator.order(multiprocess=True)
-# print(time.time() - t)
-# calculator.order_mp()
-# calculator.density()
-# calculator.density_mp()
+# calculator.order(multiprocess=True)
+calculator.density(multiprocess=True)
 # calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###
