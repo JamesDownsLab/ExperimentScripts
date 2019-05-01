@@ -17,7 +17,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ###############
 
 # tracker = JamesPT(file, tracking=True, multiprocess=False)
-ExampleChild(file, tracking=True).track()
+# ExampleChild(file, tracking=True).track()
 # tracker.track()
 
 #
@@ -36,11 +36,12 @@ calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
 # calculator.distance()
 # calculator.level_checks()
-calculator.order()
-calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
+# calculator.order()
+calculator.density()
+# calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###
 ##############
-from ExperimentScripts.AnalyseData.Correlations import plot_correlations
-plot_correlations.corr(file, 1)
+# from ExperimentScripts.AnalyseData.Correlations import plot_correlations
+# plot_correlations.corr(file, 1)
 
