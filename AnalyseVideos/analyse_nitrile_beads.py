@@ -1,4 +1,5 @@
 import warnings
+import time
 
 from Generic import filedialogs
 from ParticleTracking import dataframes, statistics
@@ -22,7 +23,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 
 #
 data_store = dataframes.DataStore(file, load=True)
-# data_store.inspect_dataframes()
+data_store.inspect_dataframes()
 
 ### Annotations ###
 ###################
@@ -36,8 +37,10 @@ calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
 # calculator.distance()
 # calculator.level_checks()
-# calculator.order()
-calculator.density()
+calculator.order()
+calculator.order_mp()
+# calculator.density()
+# calculator.density_mp()
 # calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###
