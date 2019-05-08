@@ -23,7 +23,8 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 
 #
 data_store = dataframes.DataStore(file, load=True)
-data_store.inspect_dataframes()
+data_name = data_store.filename
+# data_store.inspect_dataframes()
 
 ### Annotations ###
 ###################
@@ -33,17 +34,14 @@ data_store.inspect_dataframes()
 
 ### Statistics ###
 ##################
+# data_store = None
 calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
-t = time.time()
-calculator.distance(multiprocess=True)
-print(time.time() - t)
-t = time.time()
-calculator.distance(multiprocess=False)
-print(time.time() - t)
+# calculator.distance(multiprocess=True)
 # calculator.level_checks()
 # t = time.time()
-# calculator.order(multiprocess=True)
+calculator.order(multiprocess=True)
+# calculator.test()
 # calculator.density(multiprocess=True)
 # calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
