@@ -1,10 +1,14 @@
-from Shaker import power, scope
+from Shaker import power
+from Generic import filedialogs
+from Generic.equipment import pico_scope as scope
 import numpy as np
 import os
 
 power_supply = power.PowerSupply()
 PicoScope = scope.Scope()
-direc = 'corner6'
+
+direc = filedialogs.open_directory('Create a directory')
+
 if os.path.exists(direc) is False:
     os.mkdir(direc)
 
