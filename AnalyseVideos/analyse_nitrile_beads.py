@@ -17,19 +17,15 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-# tracker = JamesPT(file, tracking=True, multiprocess=False)
-# ExampleChild(file, tracking=True).track()
-# tracker.track()
+tracker = JamesPT(file, tracking=True, multiprocess=False)
+tracker.track()
 
 # check.tracking(file)
 
 #
 data_store = dataframes.DataStore(file, load=True)
 # data_store.inspect_dataframes()
-print(data_store.particle_data.index.name)
-print(data_store.particle_data.head())
-data_store.drop_frame_col()
-print(data_store.particle_data.head())
+# data_store.drop_frame_col()
 
 ### Annotations ###
 ###################
@@ -39,13 +35,12 @@ print(data_store.particle_data.head())
 
 ### Statistics ###
 ##################
-# data_store = None
-# calculator = statistics.PropertyCalculator(data_store)
+calculator = statistics.PropertyCalculator(data_store)
 # print(data_store.num_frames)
 # calculator.distance(multiprocess=True)
 # calculator.level_checks()
 # t = time.time()
-# calculator.order(multiprocessing=True)
+calculator.order(multiprocessing=True)
 # calculator.test()
 # calculator.density(multiprocess=True)
 # calculator.correlations(1, r_min=1, r_max=20, dr=0.04)

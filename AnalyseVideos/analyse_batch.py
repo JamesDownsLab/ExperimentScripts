@@ -20,8 +20,9 @@ for file in files:
     if not os.path.exists(data_file):
         tracker = JamesPT(file, tracking=True, multiprocess=True)
         tracker.track()
+        del tracker
     data_store = dataframes.DataStore(file, load=True)
     # annotation.CircleAnnotator(file, data_store, 'particle').annotate()
     calculator = statistics.PropertyCalculator(data_store)
     calculator.order(multiprocessing=True)
-
+    del data_store, calculator
