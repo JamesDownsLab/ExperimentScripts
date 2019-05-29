@@ -17,7 +17,7 @@ file = filedialogs.load_filename('Load a video', remove_ext=False, directory='/h
 ### Tracking ###
 ###############
 
-tracker = JamesPT(file, tracking=True, multiprocess=False)
+tracker = JamesPT(file, tracking=True, multiprocess=True)
 tracker.track()
 
 # check.tracking(file)
@@ -29,7 +29,7 @@ data_store = dataframes.DataStore(file, load=True)
 
 ### Annotations ###
 ###################
-# annotation.CircleAnnotator(file, data_store, 'real order', False).annotate()
+annotation.CircleAnnotator(file, data_store, 'real order', True).annotate()
 # # # annotation.neighbors(data_store, 0)
 # annotator = video.CircleAnnotate(data_store, file)
 
@@ -40,9 +40,9 @@ calculator = statistics.PropertyCalculator(data_store)
 # calculator.distance(multiprocess=True)
 # calculator.level_checks()
 # t = time.time()
-calculator.order(multiprocessing=True)
+calculator.order(multiprocessing=True, overwrite=True)
 # calculator.test()
-# calculator.density(multiprocess=True)
+calculator.density(multiprocess=True)
 # calculator.correlations(1, r_min=1, r_max=20, dr=0.04)
 
 ### Graphs ###

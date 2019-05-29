@@ -3,6 +3,7 @@ from ParticleTracking import dataframes
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def order_histogram(file, frames):
     data = dataframes.DataStore(file)
     plotter = plotting.Plotter()
@@ -48,7 +49,6 @@ def duty_order(data):
     return fdata.index.values, fdata['mean order'].values
 
 
-
 if __name__ == "__main__":
     from Generic import filedialogs
     file1 = filedialogs.load_filename(
@@ -60,5 +60,5 @@ if __name__ == "__main__":
         directory="/media/data/Data",
         file_filter='*.hdf5')
     up_and_down(file1, file2)
-    # frame_order(filename)
+    frame_order(file1)
     # order_histogram(filename, np.arange(0, 20000, 1000))
