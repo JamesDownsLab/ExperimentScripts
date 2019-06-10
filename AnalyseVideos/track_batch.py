@@ -3,7 +3,7 @@ import os
 
 from Generic import filedialogs
 from ParticleTracking import dataframes, statistics, annotation
-from ParticleTracking.tracking.james_nitrile import JamesPT
+from ParticleTracking.tracking.tp_locate_nitrile import TrackpyPT
 
 warnings.filterwarnings('ignore')
 
@@ -17,6 +17,6 @@ for file in files:
         print(file)
         data_file = name + '.hdf5'
         if not os.path.exists(data_file):
-            tracker = JamesPT(file, tracking=True, multiprocess=True)
+            tracker = TrackpyPT(file, tracking=True, multiprocess=True)
             tracker.track()
             del tracker
