@@ -15,4 +15,3 @@ for file in files:
     print(file)
     linker = linking.Linker(file)
     linker.link(config['search_range'], memory=config['memory'])
-    linker.quit()
