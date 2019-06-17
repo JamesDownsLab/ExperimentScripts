@@ -14,6 +14,6 @@ for file in files:
     with dataframes.DataStore(file) as data:
         # annotation.CircleAnnotator(file, data, 'particle').annotate()
         calculator = statistics.PropertyCalculator(data)
-        calculator.order(multiprocessing=True, overwrite=True)
+        calculator.order()
         # calculator.density(multiprocess=True)
         del data, calculator

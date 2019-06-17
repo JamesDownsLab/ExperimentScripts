@@ -2,25 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Generic import filedialogs
 import scipy.signal as ss
+from tqdm import tqdm
 
-# for corner in [2, 3, 4, 5, 6]:
-#
-#     duties = range(0, 1001, 1)
-#     rms = []
-#     for d in duties:
-#         times = np.loadtxt('corner{}/times_{}.txt'.format(corner, d))
-#         freq = 1/(times[1]-times[0])
-#         voltage = np.loadtxt('corner{}/voltage_{}.txt'.format(corner, d))
-#         rms.append(np.sqrt(np.mean(voltage**2)))
-#     np.savetxt('corner{}/duties.txt'.format(corner), duties)
-#     np.savetxt('corner{}/rms.txt'.format(corner), rms)
-#
-#
+#%%
 direc = filedialogs.open_directory('select a directory')
+
+#%%
 duties = range(0, 1000, 1)
 rms = []
 rms_filtered = []
-for d in duties:
+for d in tqdm(duties):
     times = np.loadtxt(direc+'/times_{}.txt'.format(d))
     freq = 1/(times[1]-times[0])
     but = ss.butter(1, 100, fs=freq, output='sos')
@@ -34,19 +25,40 @@ for d in duties:
     # plt.title(str(d))
     # plt.show()
 
+#%%
+# plt.figure()
+# plt.plot(duties, rms)
+# plt.plot(duties, rms_filtered)
+# plt.show()
+
 plt.figure()
 plt.plot(duties, rms)
-plt.plot(duties, rms_filtered)
+plt.xlabel('Duty Cycle / 1000')
+plt.ylabel('Accelerometer Voltage (V)')
 plt.show()
 
+np.savetxt(direc+'/duties.txt', duties)
+np.savetxt(direc+'/rms.txt', rms)
 
+#%%
+def sigmoid(x, a, b, c, d):
+    return b / (1 + np.exp(-a*(x-c))) + d
 
-
-
-rms = []
-for L in range(100, 1000, 50):
-    rms.append(np.sqrt(np.mean(voltage[:-L]**2)))
+#%%
+import scipy.optimize as op
+fit, fit_p = op.curve_fit(sigmoid, duties, rms)
+a, b, c, d = fit
+sigmoid_fit = sigmoid(duties, a, b, c, d)
 plt.figure()
-plt.plot(rms)
+plt.plot(duties, rms, label='data')
+plt.plot(duties, sigmoid_fit, label='fit')
+plt.xlabel('Duty Cycle / 1000')
+plt.ylabel('Accelerometer Voltage (V)')
+plt.legend()
 plt.show()
+plt.savefig(direc+'/plot.png')
 
+print('a = ', a)
+print('b = ', b)
+print('c = ', c)
+print('d = ', d)
