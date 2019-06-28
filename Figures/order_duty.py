@@ -11,6 +11,10 @@ file = filedialogs.load_filename(file_filter='*.hdf5')
 data = dataframes.DataStore(file)
 
 # %%
+# from ParticleTracking import statistics
+# calculator = statistics.PropertyCalculator(data)
+# calculator.order()
+# %%
 duty = data.df.groupby('frame')['Duty'].first().plot()
 
 # %%
@@ -51,5 +55,3 @@ ax.plot(duty_down / 10, order_down, label='down')
 ax.set_xlabel('Duty / %')
 ax.set_ylabel(r'$\langle\psi_6 \rangle$')
 ax.legend()
-
-# %%
