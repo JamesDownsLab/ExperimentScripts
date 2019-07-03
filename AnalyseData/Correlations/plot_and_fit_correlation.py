@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import signal, optimize
 
 from Generic import filedialogs
 from ParticleTracking import dataframes, statistics
@@ -21,7 +22,7 @@ duty = duty.loc[:frame_max]
 r_all = []
 g_all = []
 g6_all = []
-d_all = [600, 700, 800, 900]
+d_all = [800, 851, 900, 950, 980]
 for d in d_all:
     print(d)
     frames = duty.index[duty.values == d]
@@ -42,38 +43,44 @@ plt.figure()
 for r, g in zip(r_all, G6):
     plt.plot(r, g)
 
-# %%
-r = []
-g = []
-g6 = []
-for f in frames:
-    ri, gi, g6i = calc.correlations(f)
-    r.append(ri)
-    g.append(gi)
-    g6.append(g6i)
 
 # %%
-r = np.array(r)
-g = np.array(g)
-g6 = np.array(g6)
+plt.loglog(r, g)
 
 # %%
-g_mean = np.mean(g, axis=0)
-g6_mean = np.mean(g6, axis=0)
-r_mean = r[0, :]
+i = 3
+r = r_all[i]
+g6 = G6[i]
+plt.plot(r, r ** (-1 / 4) + 0.2)
+plt.plot(r, np.exp(-r / 30))
+plt.plot(r, g6)
+
 
 # %%
-diameter = r_mean[np.argmax(g_mean)]
-r_mean /= diameter
+def power_law(x, a, b):
+    return a * x ** (-1 / b)
+
+
+def exponential(x, a, b):
+    return a * np.exp(-x / b)
+
 
 # %%
-plt.subplot(1, 2, 1)
-plt.plot(r_mean, g_mean - 1)
-plt.xlabel('r/D')
-plt.ylabel('G(r)')
-plt.subplot(1, 2, 2)
-plt.plot(r_mean, g6_mean / g_mean)
-plt.xlabel('r/D')
-plt.ylabel('G6(r)')
+fig, ax = plt.subplots(3, 2)
+ax = ax.reshape(6, )
+for i, (r, g6, d) in enumerate(zip(r_all, G6, d_all)):
+    peaks, props = signal.find_peaks(g6, width=10)
+    r_peaks = r[peaks].real
+    g6_peaks = g6[peaks].real
+    popt_power, pcov_power = optimize.curve_fit(power_law, r_peaks, g6_peaks,
+                                                p0=[g6_peaks.max(), 4])
+    popt_exp, pcov_exp = optimize.curve_fit(exponential, r_peaks, g6_peaks,
+                                            p0=[g6_peaks.max(), 20])
 
-# %%
+    power_fit = power_law(r, *popt_power)
+    exp_fit = exponential(r, *popt_exp)
+    ax[i].plot(r, g6, label='data')
+    ax[i].plot(r, power_fit, label='power fit')
+    ax[i].plot(r, exp_fit, label='exponential fit')
+    ax[i].legend()
+    ax[i].set_title(d)
