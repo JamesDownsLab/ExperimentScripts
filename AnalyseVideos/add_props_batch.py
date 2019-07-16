@@ -13,5 +13,6 @@ for file in files:
     with dataframes.DataStore(file) as data:
         # annotation.CircleAnnotator(file, data, 'particle').annotate()
         calculator = statistics.PropertyCalculator(data)
-        calculator.order()
+        # calculator.order()
         calculator.density()
+        calculator.count()

@@ -1,8 +1,7 @@
-import warnings
 import os
+import warnings
 
 from Generic import filedialogs
-from ParticleTracking import dataframes, statistics, annotation
 from ParticleTracking.tracking.tp_locate_nitrile import TrackpyPT
 
 warnings.filterwarnings('ignore')
@@ -10,7 +9,8 @@ warnings.filterwarnings('ignore')
 directory = filedialogs.open_directory('Open Directory containing videos')
 files = os.listdir(directory)
 
-for file in files:
+for i, file in enumerate(files):
+    print(i + 1, 'of', len(files))
     file = directory + '/' + file
     name, ext = os.path.splitext(file)
     if ext == '.MP4':
