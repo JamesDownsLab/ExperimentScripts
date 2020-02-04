@@ -1,142 +1,156 @@
-from math import degrees, atan
+from math import pi, atan, sin, cos
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import spatial
-from scipy.ndimage import interpolation
 from tqdm import tqdm
 
 from Generic import images, filedialogs
 from ParticleTracking import dataframes, statistics
 
 
-def run_analysis(files, savename):
+def run(direc, lattice_spacing=5):
+    files = filedialogs.get_files_directory(direc + '/*.png')
+    savename = direc + '/data.hdf5'
+
     N = len(files)
-    ims = [images.load(f, 0) for f in files]
 
-    # Find circles in all images
-    circles = [images.find_circles(im, 27, 200, 7, 16, 16) for im in ims]
+    # Load images
+    ims = [images.load(f, 0) for f in tqdm(files, 'Loading images')]
 
-    # Save this information to a dataframe
+    # Find Circles
+    circles = [images.find_circles(im, 27, 200, 7, 16, 16)
+               for im in tqdm(ims, 'Finding Circles')]
+
+    # Save data
     data = dataframes.DataStore(savename, load=False)
-    for f, info in enumerate(circles):
+    for f, info in tqdm(enumerate(circles), 'Adding Circles'):
         data.add_tracking_data(f, info, ['x', 'y', 'r'])
 
-    # Calculate the order parameter for this data
+    # Calculate order parameter
     calc = statistics.PropertyCalculator(data)
     calc.order()
 
-    # Find the angle of the images from the first image
-    angle, xmin, xmax, h = get_im_angle(ims[0])
-    L = xmax - xmin  # pixels, equal to 195mm if the edge of the balls is selected
+    # Get the course graining width
+    cgw = get_cgw(data.df.loc[0]) / 2
 
-    # Get the dh's for each frame
-    dh = [get_dh(data.df.loc[f], ims[f], angle, xmin, xmax, h) for f in
-          tqdm(range(5))]
-    return dh, L
-
-
-def get_dh(data, im, angle, xmin, xmax, h):
-    field, x, y = coarse_order_field(data)
-    phi_d, phi_o = get_phis(field)
-    criteria = (phi_d + phi_o) / 1.6
-    binary = get_binary_image(field, criteria)
-
-    # Find the angle of the image
-    # angle = get_im_angle(im)
-
-    # Rotate the image then dilate it
-    binary = interpolation.rotate(binary, angle)
-    binary = np.uint8(binary)
-    binary = images.dilate(binary, (5, 5))
-
-    # Filter the image
-    binary = filter_by_contours(binary)
-
-    # Select border
-    # xmin, xmax, h = get_border(interpolation.rotate(im, angle))
-
-    # Find closest points to boundary on binary image
-    x, y = get_boundary(binary, xmin, xmax, h)
-    # plt.figure()
-    # plt.imshow(interpolation.rotate(im, angle))
-    # plt.plot(x, y)
-    # plt.show()
-
-    # Find dh
-    dh = np.array(y) - h
-    return dh.squeeze()
-
-
-def get_boundary(binary, xmin, xmax, h):
-    x_out = []
-    y_out = []
-    # y = np.arange(0, binary.shape[0])
-    for x in range(xmin, xmax):
-        row = binary[:, x]
-        y_values = np.argwhere(row == 1)
-        if len(y_values) > 0:
-            dist = (y_values - h) ** 2
-            smallest = np.argmin(dist)
-            x_out.append(x)
-            y_out.append(y_values[smallest])
-
-    return x_out, y_out
-
-
-def filter_by_contours(im):
-    contours = images.find_contours(im)
-    contours = images.sort_contours(contours)
-    largest_contour = contours[-1]
-
-    mask = np.zeros_like(im)
-    cv2.fillConvexPoly(mask, largest_contour, (255, 255, 255))
-    return images.mask_img(im, mask)
-
-
-def get_im_angle(im):
-    ls = LineSelector(im)
-    p1, p2 = ls.points
-    m = (p2[1] - p1[1]) / (p2[0] - p1[0])
-    c = p2[1] - m * p2[0]
-    angle = degrees(atan(m))
-    im = interpolation.rotate(im, angle)
-    ls2 = LineSelector(im)
-    xmin, xmax, h = ls2.points[0][0], ls2.points[1][0], ls2.points[0][1]
-    return angle, xmin, xmax, h
-
-
-def get_binary_image(field, criteria):
-    error = 0.02 * criteria
-    binary = (field > criteria - error) * (field < criteria + error)
-    return binary
-
-
-def get_phis(field, threshold=1e-5):
-    s = field.shape
-    d_values = field[:s[0] // 4, :]
-    o_values = field[3 * s[0] // 4:, :]
-    phi_d = np.mean(d_values[d_values > threshold])
-    phi_o = np.mean(o_values[o_values > threshold])
-    return phi_d, phi_o
-
-
-def coarse_order_field(df):
-    order = df.order.values
-    x = np.arange(0, max(df.x), 1)
-    y = np.arange(0, max(df.y), 1)
+    # Create the lattice points
+    x = np.arange(0, max(data.df.x), lattice_spacing)
+    y = np.arange(0, max(data.df.y), lattice_spacing)
     x, y = np.meshgrid(x, y)
+
+    # Calculate the coarse order fields
+    fields = [coarse_order_field(data.df.loc[f], cgw, x, y)
+              for f in tqdm(range(N), 'Calculating Fields')]
+
+    # Calculate the field threshold
+    field_threshold = get_field_threshold(fields, lattice_spacing, ims[0])
+
+    # Find the contours representing the boundary in each frame
+    contours = [find_contours(f, field_threshold)
+                for f in tqdm(fields, 'Calculating contours')]
+
+    # Multiply the contours by the lattice spacing
+    contours = [c * lattice_spacing for c in contours]
+
+    # Find the angle of the image to rotate the boundary to the x-axis
+    a, c, p1, p2 = get_angle(ims[0])
+
+    # Rotate the selection points and the contours by the angle
+    p1 = rotate_points(np.array(p1), c, a)
+    p2 = rotate_points(np.array(p2), c, a)
+    contours = [rotate_points(contour.squeeze(), c, a)
+                for contour in contours]
+
+    xmin = int(p1[0])
+    xmax = int(p2[0])
+    h = int(p1[1])
+
+    # Get the heights of the fluctuations from the straight boundary
+    hs = [get_h(contour, ims[0].shape, xmin, xmax, h)
+          for contour in tqdm(contours, 'Calculating heights')]
+
+    # Calculate the fourier transforms for all the frames
+    L = xmax - xmin
+    k, yplot = get_fourier(hs, L)
+
+    # Calculate the best fit line for the fourier
+    p, cov = np.polyfit(k, yplot, 1, cov=True)
+    p1 = np.poly1d(p)
+    yfit = p1(k)
+
+    # Plot the results
+    plt.figure()
+    plt.plot(k, yplot)
+    plt.plot(k, yfit)
+    plt.legend(
+        ['Data',
+         'Fit with gradient ${:.2f} \pm {:.2f}$'.format(p[0],
+                                                        cov[0][0] ** 0.5)])
+    plt.xlabel('$k [$p$^{-1}]$')
+    plt.ylabel('$ < |\delta h_k|^2 > L [$p$^3] $')
+
+    return k, yplot, p, cov
+
+
+def get_cgw(df):
+    tree = spatial.cKDTree(df[['x', 'y']].values)
+    dists, _ = tree.query(tree.data, 2)
+    cgw = np.mean(dists[:, 1])
+    return cgw
+
+
+def coarse_order_field(df, cgw, x, y, no_of_neighbours=20):
+    """
+    Calculate the coarse-grained field characterising local orientation order
+    """
+
+    order = df.order.values
+
+    # Generate the lattice nodes to query
+    # x, y = np.meshgrid(x, y)
     r = np.dstack((x, y))
 
-    # points_for_tree = df.loc[df.order > 0.8, ['x', 'y']].values
-    points_for_tree = df[['x', 'y']].values
-    tree = spatial.cKDTree(points_for_tree)
-    tree_dists, tree_indxs = tree.query(r, 20, n_jobs=-1)
-    cgw = np.mean(tree_dists[:, :, 0])
+    # Get the positions of all the particles
+    particles = df[['x', 'y']].values
 
-    exp_term = np.exp(-tree_dists ** 2 / (2 * cgw ** 2)) / (
-            2 * np.pi * cgw ** 2)
-    return np.sum(exp_term * order[tree_indxs], axis=2), x, y
+    # Generate the tree from the particles
+    tree = spatial.cKDTree(particles)
+
+    # Query the tree at all the lattice nodes to find the nearest n particles
+    # Set n_jobs=-1 to use all cores
+    dists, indices = tree.query(r, no_of_neighbours, n_jobs=-1)
+
+    # Calculate all the coarse-grained delta functions (Katira ArXiv eqn 3
+    cg_deltas = np.exp(-dists ** 2 / (2 * cgw ** 2)) / (2 * pi * cgw ** 2)
+
+    # Multiply by the orders to get the summands
+    summands = cg_deltas * order[indices]
+
+    # Sum along axis 2 to calculate the field
+    field = np.sum(summands, axis=2)
+
+    return field
+
+
+def get_field_threshold(fields, ls, im):
+    # Draw a box around an always ordered region of the image to
+    # calculate the phi_o
+    fields = np.dstack(fields)
+    line_selector = LineSelector(im)
+    op1, op2 = line_selector.points
+    phi_o = np.mean(
+        fields[op1[1] // ls:op2[1] // ls, op1[0] // ls:op2[0] // ls, :])
+
+    # Repeat for disordered
+    line_selector = LineSelector(im)
+    dp1, dp2 = line_selector.points
+    phi_d = np.mean(
+        fields[dp1[1] // ls:dp2[1] // ls, dp1[0] // ls:dp2[0] // ls, :])
+
+    field_threshold = (phi_o + phi_d) / 2
+    return field_threshold
 
 
 class LineSelector:
@@ -157,45 +171,63 @@ class LineSelector:
             self.points.append([x, y])
 
 
+def find_contours(f, t):
+    t_low = t - 0.02 * t
+    t_high = t + 0.02 * 5
+    new_f = (f < t_high) * (f > t_low)
+    new_f = np.uint8(new_f)
+    contours = images.find_contours(new_f)
+    contours = images.sort_contours(contours)
+    return contours[-1]
+
+
+def get_angle(im):
+    ls = LineSelector(im)
+    p1, p2 = ls.points
+    m = (p2[1] - p1[1]) / (p2[0] - p1[0])
+    a = -atan(m)
+    c = np.array([i // 2 for i in np.shape(im)])[::-1]
+    return a, c, p1, p2
+
+
+def rotate_points(points, center, a):
+    rot = np.array(((cos(a), -sin(a)), (sin(a), cos(a))))
+    a1 = points - center
+    a2 = rot @ a1.T
+    a3 = a2.T + center
+    return a3
+
+
+def get_h(contour, shape, xmin, xmax, h):
+    xs = []
+    ys = []
+    im = np.zeros((shape[0] * 2, shape[1] * 2))
+    im = cv2.polylines(im, [contour.astype('int32')], True, (255, 255, 255))
+    im = images.dilate(im, (3, 3))
+    for x in np.arange(xmin, xmax):
+        crossings = np.argwhere(im[:, x] == 255)
+        dists = crossings - h
+        closest = np.argmin((crossings - h) ** 2)
+        crossing = crossings[closest]
+        ys.append(crossing[0])
+        xs.append(x)
+    hs = [y - h for y in ys]
+    return hs
+
+
+def get_fourier(hs, L):
+    sp = [np.fft.fft(h) for h in hs]
+    N = len(hs[0])
+    freq = np.fft.fftfreq(N)
+
+    y = np.stack(sp)
+    y = np.mean(y, axis=0).squeeze()
+
+    xplot = np.log(freq[1:N // 2])
+    yplot = np.log(L * np.abs(y[1:N // 2]) ** 2)
+    return xplot, yplot
+
+
 if __name__ == "__main__":
     direc = filedialogs.open_directory()
-    files = filedialogs.get_files_directory(direc + '/*.png')
-    savename = direc + '/data.hdf5'
-    dh, L = run_analysis(files, savename)
-
-# %%
-import matplotlib.pyplot as plt
-
-dh, L = dh
-dh_all = np.concatenate(dh)
-plt.plot(dh_all)
-
-# %%
-sp = [np.fft.fft(d) for d in dh if len(d) == 1657]
-freq = np.fft.fftfreq(len(dh[0]))
-
-# %%
-y = np.stack(sp)
-y = np.mean(y, axis=0)
-
-# %%
-plt.loglog(freq, y * L)
-plt.xlabel('$ k [pix^{-1}]$')
-plt.ylabel(r'$ \langle | \delta h_k|^2\rangle L [pix^{-3}]$')
-
-# %%
-# plt.plot(np.log(freq), np.log(L*y**2))
-
-N = len(dh[0])
-freq_log = np.log(freq[1:N // 2])
-y_log = np.log(L * np.abs(y[1:N // 2]) ** 2)
-
-plt.plot(freq_log, y_log)
-
-p, cov = np.polyfit(freq_log[10:], y_log[10:], 1, cov=True)
-p1 = np.poly1d(p)
-
-plt.plot(freq_log[10:], p1(freq_log[10:]), '-')
-
-print("Gradient of Line = {:.2f} +/- {:.2f}".format(p[0], cov[0][0] ** 0.5))
-print("Intercept at {:.2f}".format(p1[0]))
+    k, yplot, p, cov = run(direc, 5)
