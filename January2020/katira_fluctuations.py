@@ -6,6 +6,8 @@ import numpy as np
 from scipy import spatial
 from tqdm import tqdm
 
+import seaborn
+seaborn.set()
 from Generic import images, filedialogs
 from ParticleTracking import dataframes, statistics
 
@@ -73,25 +75,16 @@ def run(direc, lattice_spacing=5):
 
     # Calculate the fourier transforms for all the frames
     L = xmax - xmin
+    pixels_to_mms = 195/L
+    print('One pixel is {:.2f} mm'.format(pixels_to_mms))
+
+    #convert to mm
+    hs = [h * pixels_to_mms for h in hs]
+    L = L * pixels_to_mms
+
     k, yplot = get_fourier(hs, L)
 
-    # Calculate the best fit line for the fourier
-    p, cov = np.polyfit(k, yplot, 1, cov=True)
-    p1 = np.poly1d(p)
-    yfit = p1(k)
-
-    # Plot the results
-    plt.figure()
-    plt.plot(k, yplot)
-    plt.plot(k, yfit)
-    plt.legend(
-        ['Data',
-         'Fit with gradient ${:.2f} \pm {:.2f}$'.format(p[0],
-                                                        cov[0][0] ** 0.5)])
-    plt.xlabel('$k [$p$^{-1}]$')
-    plt.ylabel('$ < |\delta h_k|^2 > L [$p$^3] $')
-
-    return k, yplot, p, cov
+    return k, yplot
 
 
 def get_cgw(df):
@@ -211,7 +204,7 @@ def get_h(contour, shape, xmin, xmax, h):
         crossing = crossings[closest]
         ys.append(crossing[0])
         xs.append(x)
-    hs = [y - h for y in ys]
+    hs = np.array([y - h for y in ys])
     return hs
 
 
@@ -223,11 +216,38 @@ def get_fourier(hs, L):
     y = np.stack(sp)
     y = np.mean(y, axis=0).squeeze()
 
-    xplot = np.log(freq[1:N // 2])
-    yplot = np.log(L * np.abs(y[1:N // 2]) ** 2)
+    xplot = freq[1:N // 2]
+    yplot = L * np.abs(y[1:N // 2]) ** 2
     return xplot, yplot
+
+
+def plot(k, y):
+    p, cov = np.polyfit(np.log(k), np.log(y), 1, cov=True)
+    p1 = np.poly1d(p)
+
+    # Plot the results
+    plt.figure()
+    plt.plot(np.log(k), np.log(y))
+    plt.plot(np.log(k), p1(np.log(k)))
+    plt.legend(
+        ['Data',
+         'Fit with gradient ${:.2f} \pm {:.2f}$'.format(p[0],
+                                                        cov[0][0] ** 0.5)])
+    plt.xlabel('log($k [$mm$^{-1}]$)')
+    plt.ylabel('$log( < |\delta h_k|^2 > L [$mm$^3] $)')
+
+
+    plt.figure()
+    plt.loglog(k, yplot, '.')
+    plt.loglog(k, np.exp(p1(np.log(k))))
+    plt.legend(['Data', 'Fit'])
+    plt.xlabel('$k$ [mm$^{-1}$]')
+    plt.ylabel(r'$\langle \left| \delta h_k \right|^2L$  [mm$^3$]')
 
 
 if __name__ == "__main__":
     direc = filedialogs.open_directory()
-    k, yplot, p, cov = run(direc, 5)
+    k, yplot = run(direc, 5)
+    plot(k, yplot)
+    # Calculate the best fit line for the fourier
+
